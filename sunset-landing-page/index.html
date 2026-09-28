@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Loads and renders the Klaviyo embed form below. Replace YOUR_PUBLIC_API_KEY with your public API key. -->
+<script async type="text/javascript" src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=YOUR_PUBLIC_API_KEY"></script>
 <style>
   :root {
     --teal: #3e7e7d;
@@ -61,69 +63,12 @@
     line-height: 1.6;
     margin: 0 0 28px;
   }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  input[type="email"] {
-    width: 100%;
-    padding: 13px 14px;
-    font-family: inherit;
-    font-size: 15px;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    outline: none;
-    transition: border-color 0.15s ease;
-  }
-  input[type="email"]:focus {
-    border-color: var(--teal);
-  }
-  button {
-    width: 100%;
-    padding: 13px 14px;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: var(--white);
-    background: var(--teal);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  button:hover { background: var(--teal-hover); }
-  button:disabled { background: #a9c4c3; cursor: not-allowed; }
   .fine-print {
     margin-top: 22px;
     font-size: 12px;
     color: var(--muted);
     line-height: 1.5;
   }
-  .status {
-    margin-top: 16px;
-    font-size: 14px;
-    display: none;
-  }
-  .status.error { color: var(--error); display: block; }
-  .success-view { display: none; }
-  .success-view.visible { display: block; }
-  .success-view .check {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 16px;
-    border-radius: 50%;
-    background: var(--gold);
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: 600;
-  }
-  .form-view.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -131,181 +76,24 @@
     <!-- Replace with your brand logo -->
     <!-- <img class="logo" src="https://yourdomain.com/logo.svg" alt="Brand" /> -->
 
-    <div class="form-view" id="formView">
+    <div class="form-view">
       <h1>We haven't heard from you in a while</h1>
       <p class="sub">
         You're still on our list, but we want to make sure you actually want to be here.
         Confirm below and we'll keep sending the good stuff — otherwise we'll assume
         you'd rather not hear from us and remove you automatically.
       </p>
-      <form id="confirmForm">
-        <input
-          type="email"
-          id="emailInput"
-          name="email"
-          placeholder="you@example.com"
-          required
-        />
-        <button type="submit" id="submitBtn">Keep me signed up</button>
-      </form>
-      <div class="status" id="statusMsg"></div>
+
+      <!-- Klaviyo embed form: handles the email input, submission, and
+           triggers the "Submitted Form" metric this form's confirmation
+           uses in the flow's conditional split. -->
+      <div class="klaviyo-form-SPHZtc"></div>
+
       <p class="fine-print">
         No action needed if you'd rather not stay subscribed — we'll take care of it,
         no hard feelings.
       </p>
     </div>
-
-    <div class="success-view" id="successView">
-      <div class="check">&#10003;</div>
-      <h1>You're all set</h1>
-      <p class="sub">
-        Thanks for confirming — you'll keep hearing from us as usual.
-      </p>
-    </div>
   </div>
-
-  <script>
-    // ---- Configuration -------------------------------------------------
-    // Your Klaviyo public API key (Account > Settings > API Keys > Public key).
-    var KLAVIYO_COMPANY_ID = "YOUR_PUBLIC_API_KEY";
-
-    // The custom event that the Klaviyo flow's conditional split checks for.
-    // Must match the metric name used in the flow's "Has since" filter.
-    var CONFIRMATION_EVENT_NAME = "Confirmed Subscription";
-
-    // Optional: the list ID to (re)subscribe the profile to. Leave blank to
-    // skip explicit list subscription and rely on the event alone.
-    var LIST_ID = ""; // e.g. "XyZ123"
-    // ---------------------------------------------------------------------
-
-    var formView = document.getElementById("formView");
-    var successView = document.getElementById("successView");
-    var form = document.getElementById("confirmForm");
-    var emailInput = document.getElementById("emailInput");
-    var submitBtn = document.getElementById("submitBtn");
-    var statusMsg = document.getElementById("statusMsg");
-
-    // Pre-fill the email from the link Klaviyo sends, e.g.
-    // https://yourdomain.com/resubscribe?email={{ person.email }}
-    (function prefillEmail() {
-      var params = new URLSearchParams(window.location.search);
-      var email = params.get("email");
-      if (email) emailInput.value = email;
-    })();
-
-    function showError(message) {
-      statusMsg.textContent = message;
-      statusMsg.classList.add("error");
-    }
-
-    function clearError() {
-      statusMsg.textContent = "";
-      statusMsg.classList.remove("error");
-    }
-
-    async function trackConfirmationEvent(email) {
-      var body = {
-        data: {
-          type: "event",
-          attributes: {
-            properties: {},
-            metric: {
-              data: {
-                type: "metric",
-                attributes: { name: CONFIRMATION_EVENT_NAME }
-              }
-            },
-            profile: {
-              data: {
-                type: "profile",
-                attributes: { email: email }
-              }
-            }
-          }
-        }
-      };
-
-      var res = await fetch(
-        "https://a.klaviyo.com/client/events/?company_id=" + KLAVIYO_COMPANY_ID,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            revision: "2024-10-15"
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (!res.ok && res.status !== 202) {
-        throw new Error("event_failed");
-      }
-    }
-
-    async function subscribeToList(email) {
-      if (!LIST_ID) return;
-
-      var body = {
-        data: {
-          type: "subscription",
-          attributes: {
-            profile: {
-              data: {
-                type: "profile",
-                attributes: {
-                  email: email,
-                  subscriptions: {
-                    email: { marketing: { consent: "SUBSCRIBED" } }
-                  }
-                }
-              }
-            }
-          },
-          relationships: {
-            list: { data: { type: "list", id: LIST_ID } }
-          }
-        }
-      };
-
-      var res = await fetch(
-        "https://a.klaviyo.com/client/subscriptions/?company_id=" + KLAVIYO_COMPANY_ID,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            revision: "2024-10-15"
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (!res.ok && res.status !== 202) {
-        throw new Error("subscribe_failed");
-      }
-    }
-
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      clearError();
-
-      var email = emailInput.value.trim();
-      if (!email) return;
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Confirming...";
-
-      try {
-        await trackConfirmationEvent(email);
-        await subscribeToList(email);
-
-        formView.classList.add("hidden");
-        successView.classList.add("visible");
-      } catch (err) {
-        showError("Something went wrong. Please try again in a moment.");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Keep me signed up";
-      }
-    });
-  </script>
 </body>
 </html>
